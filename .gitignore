@@ -1,0 +1,20 @@
+# ---- 构建产物 ----
+map-menu-plugin/build/
+*.class
+
+# ---- 本地构建依赖（构建前需自行放入 libs/）----
+map-menu-plugin/libs/
+
+# ---- 运行时配置 / 日志 / 存档 ----
+map-menu-plugin/config/
+
+# ---- 烟雾测试 / 临时工作目录 ----
+work/
+
+# ---- IDE ----
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
