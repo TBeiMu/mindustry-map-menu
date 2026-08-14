@@ -2,15 +2,15 @@
 
 和朋友一起玩的 Mindustry 8（build 159.7）专用服务器插件与地图包仓库。
 
+地图包已扩充：2026-08-14 新增 **生存 Top 20 + 进攻 Top 20**（来自 mindustry-tool.com 验证库，全部通过服务器加载实测），目录 & 预览见 `community-maps/` 与 `docs/previews/`。
+
 ## 内容
 
 | 路径 | 说明 |
 | --- | --- |
 | `map-menu-plugin/` | 「地图管理器」插件源码（Java 17 / Gradle），详见 [map-menu-plugin/README.md](map-menu-plugin/README.md) |
 | `outputs/MapMenu.jar` | 当前构建产物，直接放入服务器 `config/mods/` 即可 |
-| `outputs/maps-4pvp/` | 已验证的 4 人 PVP 地图（5 张） |
-| `outputs/maps-attack/` | 已验证的进攻模式地图（8 张） |
-| `community-maps/` | 按 `survival/ attack/ pvp/` 分类整理的社区地图包，见 [community-maps/README.md](community-maps/README.md) |
+| `community-maps/` | 社区地图包：生存 26 张 / 进攻 23 张 / PVP 3 张（含 2026-08 新增 Top20×2，带预览与来源），见 [community-maps/README.md](community-maps/README.md) |
 
 ## 插件功能速览
 
