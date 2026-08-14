@@ -48,7 +48,6 @@
 4. 启动服务器，在控制台确认出现 `[MapMenu] Loaded`。
 5. 进入游戏输入 `/maps`。
 
-不要删除服务器现有的 `Essentials.jar` 或 `Mindustry.jar`。
 
 ## 从源码构建
 
