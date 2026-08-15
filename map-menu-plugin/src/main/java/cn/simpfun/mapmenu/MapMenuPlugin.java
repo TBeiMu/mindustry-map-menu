@@ -42,6 +42,9 @@ import java.util.Locale;
 public class MapMenuPlugin extends Plugin{
     private static final int MAPS_PER_PAGE = 8;
     private static final int SAVE_SLOT_COUNT = 10;
+    // WorldLoadEvent fires before existing clients finish receiving the new world. A menu sent
+    // immediately can be discarded by the client's loading screen, so retry a few times.
+    private static final float[] PVP_TEAM_MENU_DELAYS = {2f, 6f, 12f};
     private static final ObjectSet<String> BUILTIN_PVP_MAPS = ObjectSet.with("veins", "glacier", "passage");
 
     private enum MapCategory{
@@ -90,6 +93,7 @@ public class MapMenuPlugin extends Plugin{
     private final ObjectMap<String, PendingInput> pendingInputs = new ObjectMap<>();
     private final ObjectIntMap<String> pendingSlots = new ObjectIntMap<>();
     private final ObjectMap<String, Seq<Team>> pvpTeamMenuChoices = new ObjectMap<>();
+    private int pvpTeamPromptGeneration;
 
     // map-choice pending state: waiting for a /maps pick at startup or after game over
     private boolean pendingMapChoice;
@@ -125,12 +129,21 @@ public class MapMenuPlugin extends Plugin{
             if(Vars.state.rules.pvp) Timer.schedule(this::refreshPendingPvpTeamMenus, 0.1f);
         });
         Events.on(WorldLoadEvent.class, event -> {
-            if(Vars.state.rules.pvp){
-                preparePvpTeamSelection();
-                Timer.schedule(this::showPvpTeamMenuToAll, 0.5f);
-            }else{
-                selectedPvpPlayers.clear();
-            }
+            int generation = ++pvpTeamPromptGeneration;
+            // ServerControl.play() assigns the new map rules immediately after
+            // World.loadMap() returns. WorldLoadEvent is fired from inside
+            // World.loadMap(), so Vars.state.rules can still describe the old
+            // map here. Defer the check until the caller has finished updating
+            // the state, otherwise existing players never get a PVP prompt.
+            Timer.schedule(() -> {
+                if(generation != pvpTeamPromptGeneration) return;
+                if(Vars.state.rules.pvp){
+                    preparePvpTeamSelection();
+                    schedulePvpTeamMenuPrompts(generation);
+                }else{
+                    selectedPvpPlayers.clear();
+                }
+            }, 0.1f);
         });
         Events.on(PlayerJoin.class, event -> {
             if(Vars.state.rules.pvp){
@@ -845,6 +858,17 @@ public class MapMenuPlugin extends Plugin{
         for(Player player : Groups.player) showPvpTeamMenu(player);
     }
 
+    private void schedulePvpTeamMenuPrompts(int generation){
+        for(float delay : PVP_TEAM_MENU_DELAYS){
+            Timer.schedule(() -> {
+                // Ignore delayed prompts belonging to an older world. Only players who have not
+                // selected a team are prompted, so a successful earlier prompt is never repeated.
+                if(generation != pvpTeamPromptGeneration || !Vars.state.rules.pvp) return;
+                refreshPendingPvpTeamMenus();
+            }, delay);
+        }
+    }
+
     private void refreshPendingPvpTeamMenus(){
         if(!Vars.state.rules.pvp) return;
         for(Player player : Groups.player){
@@ -878,7 +902,9 @@ public class MapMenuPlugin extends Plugin{
                 buttons[row][column] = team.coloredName() + "\n[white]当前 " + selectedPlayerCount(team) + " 人[]";
             }
         }
-        Call.menu(player.con(), pvpTeamMenuId, "[accent]选择 PVP 队伍[]",
+        // Use a follow-up menu so delayed retries replace the existing dialog
+        // instead of stacking multiple dialogs on the client's UI.
+        Call.followUpMenu(player.con(), pvpTeamMenuId, "[accent]选择 PVP 队伍[]",
                 "请选择一个有核心的队伍。选队后各队人数差不能超过 2。\n[lightgray]关闭后可输入 /team 重新打开。[]", buttons);
     }
 
@@ -909,6 +935,7 @@ public class MapMenuPlugin extends Plugin{
         player.team(target);
         selectedPvpPlayers.add(player.uuid());
         pvpTeamMenuChoices.remove(player.uuid());
+        Call.hideFollowUpMenu(player.con(), pvpTeamMenuId);
         player.deathTimer(0f);
         if(target.core() != null) target.core().requestSpawn(player);
         player.sendMessage("[green]你已加入 " + target.coloredName() + "[green]。[]");

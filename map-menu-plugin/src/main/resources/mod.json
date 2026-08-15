@@ -3,7 +3,7 @@
   "displayName": "Map Menu",
   "author": "Codex",
   "description": "服务器地图管理器：地图分类（内置/生存/进攻/PVP）、地图选择、换图投票、默认/随机/轮换地图。",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "minGameVersion": "159",
   "main": "cn.simpfun.mapmenu.MapMenuPlugin",
   "tags": ["server", "utility"],
